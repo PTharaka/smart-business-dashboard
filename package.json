@@ -1,0 +1,13 @@
+{
+  "name": "smart-business-dashboard",
+  "version": "1.0.0",
+  "description": "Smart Business Dashboard - Backend API",
+  "scripts": {
+    "install-server": "npm install --prefix server",
+    "start": "node server/src/index.js",
+    "build": "npm install --prefix server"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
