@@ -24,7 +24,8 @@ router.post('/register', async (req, res) => {
         res.json({ token, user: { id: user.id, email, name } });
     });
   } catch (err) {
-    res.status(500).json({ message: 'Server Error' });
+    console.error('Auth Error:', err);
+    res.status(500).json({ message: 'Server Error', error: err.message });
   }
 });
 
@@ -44,7 +45,8 @@ router.post('/login', async (req, res) => {
         res.json({ token, user: { id: user.id, email, name: user.name } });
     });
   } catch (err) {
-    res.status(500).json({ message: 'Server Error' });
+    console.error('Auth Error:', err);
+    res.status(500).json({ message: 'Server Error', error: err.message });
   }
 });
 

@@ -20,6 +20,13 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/sales', salesRoutes);
 
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected' 
+  });
+});
+
 // Server Startup
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
