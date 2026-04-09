@@ -20,9 +20,15 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/sales', salesRoutes);
 
-app.get('/health', (req, res) => {
+// Health and Status
+app.get('/', (req, res) => {
+  res.send('Smart Business Dashboard API is Running - ' + new Date().toISOString());
+});
+
+app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
+    timestamp: new Date().toISOString(),
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected' 
   });
 });
