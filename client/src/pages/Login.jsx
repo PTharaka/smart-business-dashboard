@@ -10,7 +10,8 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const endpoint = isLogin ? `${API_URL}/api/auth/login` : `${API_URL}/api/auth/register`;
       const res = await axios.post(endpoint, formData);
       localStorage.setItem('token', res.data.token);
       window.location.href = '/';

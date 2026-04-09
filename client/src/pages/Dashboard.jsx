@@ -31,7 +31,11 @@ const Dashboard = () => {
   const [newSale, setNewSale] = useState({ amount: '', category: '', product: '' });
 
   const token = localStorage.getItem('token');
-  const ax = axios.create({ headers: { Authorization: `Bearer ${token}` } });
+  const API_URL = import.meta.env.VITE_API_URL || '';
+  const ax = axios.create({ 
+    baseURL: API_URL,
+    headers: { Authorization: `Bearer ${token}` } 
+  });
 
   useEffect(() => {
     fetchData();
