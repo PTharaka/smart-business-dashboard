@@ -14,7 +14,7 @@ A complete, full-stack predictive dashboard designed for modern business analyti
 > *Add screenshots here after deploying*
 
 ## Live Demo
-> *[Link to Live Demo]*
+> [github.com/PTharaka/smart-business-dashboard](https://github.com/PTharaka/smart-business-dashboard)
 
 ## Tech Stack
 - **Frontend**: React (Vite)
