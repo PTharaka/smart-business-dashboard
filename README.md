@@ -14,7 +14,10 @@ A complete, full-stack predictive dashboard designed for modern business analyti
 > *Add screenshots here after deploying*
 
 ## Live Demo
-> **[🚀 Live Demo → smart-business-dashboard-lilac.vercel.app](https://smart-business-dashboard-lilac.vercel.app)**
+> **[🚀 Frontend (Vercel) → smart-business-dashboard-lilac.vercel.app](https://smart-business-dashboard-lilac.vercel.app)**
+
+> **[⚙️ Backend API (Render) → smart-business-dashboard-sz0y.onrender.com](https://smart-business-dashboard-sz0y.onrender.com)**
+
 
 ## Tech Stack
 - **Frontend**: React (Vite)
