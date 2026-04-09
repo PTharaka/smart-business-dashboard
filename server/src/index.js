@@ -20,11 +20,11 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/sales', salesRoutes);
 
+// Server Startup
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
 // MongoDB Connection
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/smartDashboard';
 mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  })
+  .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
