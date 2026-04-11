@@ -155,6 +155,8 @@ const Dashboard = () => {
     reader.readAsText(file);
   };
 
+  const themeColor = isDarkMode ? '#f8fafc' : '#0f172a';
+
   // Prepare overall variables
   const totalRevenue = sales.reduce((sum, s) => sum + Number(s.amount), 0);
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
@@ -217,10 +219,11 @@ const Dashboard = () => {
           padding: '10px 16px',
           borderRadius: '8px',
           marginBottom: '8px',
-          background: activeTab === nav.id ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-          color: activeTab === nav.id ? '#fff' : 'var(--text-muted)',
-          fontWeight: activeTab === nav.id ? '600' : '400',
-          transition: 'all 0.2s ease'
+          background: activeTab === nav.id ? 'var(--glass-border)' : 'transparent',
+          color: activeTab === nav.id ? 'var(--text-main)' : 'var(--text-muted)',
+          fontWeight: activeTab === nav.id ? '700' : '400',
+          transition: 'all 0.2s ease',
+          border: activeTab === nav.id ? '1px solid var(--accent-primary)' : '1px solid transparent'
         }}
       >
         {nav.label}
@@ -372,7 +375,7 @@ const Dashboard = () => {
                 <h3>Sales by Category</h3>
                 <div style={{ height: '300px', marginTop: '16px', display: 'flex', justifyContent: 'center' }}>
                   {sales.length > 0 ? (
-                    <Doughnut data={doughnutData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: 'var(--text-main)'} } } }} />
+                    <Doughnut data={doughnutData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: themeColor } } } }} />
                   ) : <p>No data to analyze yet.</p>}
                 </div>
               </div>
@@ -380,7 +383,7 @@ const Dashboard = () => {
                  <h3>Customer Segmentation</h3>
                  <div style={{ height: '300px', marginTop: '16px', display: 'flex', justifyContent: 'center' }}>
                    {Object.keys(intelligence.segments).length > 0 ? (
-                     <Doughnut data={segmentData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: 'var(--text-main)'} } } }} />
+                     <Doughnut data={segmentData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: themeColor } } } }} />
                    ) : <p>Generating customer segments...</p>}
                  </div>
               </div>
