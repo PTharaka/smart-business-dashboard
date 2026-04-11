@@ -27,8 +27,13 @@ ChartJS.register(
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('overview'); // overview, analytics, reports
   const [sales, setSales] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [goals, setGoals] = useState([]);
+  const [intelligence, setIntelligence] = useState({ anomalies: [], insights: [] });
   const [prediction, setPrediction] = useState(null);
   const [newSale, setNewSale] = useState({ amount: '', category: '', product: '' });
+  const [newExpense, setNewExpense] = useState({ amount: '', category: '', description: '' });
+  const [newGoal, setNewGoal] = useState({ title: '', targetAmount: '', deadline: '', category: 'Revenue' });
 
   const token = localStorage.getItem('token');
   const API_URL = import.meta.env.VITE_API_URL || '';
@@ -43,11 +48,17 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [salesRes, predRes] = await Promise.all([
+      const [salesRes, expRes, goalRes, intelRes, predRes] = await Promise.all([
         ax.get('/api/sales'),
+        ax.get('/api/expenses'),
+        ax.get('/api/goals'),
+        ax.get('/api/intelligence'),
         ax.get('/api/sales/prediction')
       ]);
       setSales(salesRes.data);
+      setExpenses(expRes.data);
+      setGoals(goalRes.data);
+      setIntelligence(intelRes.data);
       setPrediction(predRes.data);
     } catch (err) {
       console.error(err);
@@ -59,6 +70,28 @@ const Dashboard = () => {
     try {
       await ax.post('/api/sales', newSale);
       setNewSale({ amount: '', category: '', product: '' });
+      fetchData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleAddExpense = async (e) => {
+    e.preventDefault();
+    try {
+      await ax.post('/api/expenses', newExpense);
+      setNewExpense({ amount: '', category: '', description: '' });
+      fetchData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleAddGoal = async (e) => {
+    e.preventDefault();
+    try {
+      await ax.post('/api/goals', newGoal);
+      setNewGoal({ title: '', targetAmount: '', deadline: '', category: 'Revenue' });
       fetchData();
     } catch (err) {
       console.error(err);
@@ -84,6 +117,8 @@ const Dashboard = () => {
 
   // Prepare overall variables
   const totalRevenue = sales.reduce((sum, s) => sum + Number(s.amount), 0);
+  const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  const netProfit = totalRevenue - totalExpenses;
 
   // Prepare Line Chart Data (Revenue Timeline)
   const lineChartData = {
@@ -156,16 +191,25 @@ const Dashboard = () => {
       </div>
 
       <div className="main-content">
-        <h1>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h1>
-        
-        {/* OVERVIEW TAB */}
-        {activeTab === 'overview' && (
-          <>
             <div className="dashboard-grid">
               <div className="glass-panel">
                 <p className="kpi-label">Total Revenue</p>
                 <p className="kpi-value">${totalRevenue.toFixed(2)}</p>
                 <p className="trend-up">+14% vs last period</p>
+              </div>
+
+              <div className="glass-panel">
+                <p className="kpi-label">Total Expenses</p>
+                <p className="kpi-value">${totalExpenses.toFixed(2)}</p>
+                <p className="trend-down">-8% vs last period</p>
+              </div>
+
+              <div className="glass-panel" style={{ borderLeft: '4px solid #10b981' }}>
+                <p className="kpi-label">Net Profit</p>
+                <p className="kpi-value">${netProfit.toFixed(2)}</p>
+                <p className={netProfit >= 0 ? 'trend-up' : 'trend-down'}>
+                  {netProfit >= 0 ? 'Profit' : 'Loss'} identified
+                </p>
               </div>
 
               <div className="glass-panel" style={{ position: 'relative', overflow: 'hidden' }}>
@@ -182,16 +226,50 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="dashboard-grid" style={{ gridTemplateColumns: '2fr 1fr' }}>
+            {intelligence.anomalies.length > 0 && (
+              <div className="glass-panel" style={{ marginBottom: '24px', border: '1px solid var(--danger)', backgroundColor: 'rgba(239, 68, 68, 0.05)' }}>
+                <h3>🧠 Smart Alerts & Anomalies</h3>
+                <div style={{ marginTop: '12px' }}>
+                  {intelligence.anomalies.map((anno, i) => (
+                    <p key={i} style={{ color: anno.severity === 'high' ? 'var(--danger)' : '#f59e0b', marginBottom: '8px' }}>
+                      {anno.message}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="dashboard-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
               <div className="glass-panel">
-                <h3>Revenue Timeline</h3>
-                <div style={{ height: '300px', marginTop: '16px' }}>
-                  <Line data={lineChartData} options={{ responsive: true, maintainAspectRatio: false, color: '#f8fafc', scales: { x: { ticks: { color: '#94a3b8'} }, y: { ticks: { color: '#94a3b8'} } } }} />
+                <h3>Goal Progress</h3>
+                <div style={{ marginTop: '16px' }}>
+                  {goals.length > 0 ? goals.map(goal => (
+                    <div key={goal._id} style={{ marginBottom: '20px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <span>{goal.title}</span>
+                        <span>{((goal.currentAmount / goal.targetAmount) * 100).toFixed(0)}%</span>
+                      </div>
+                      <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ width: `${Math.min(100, (goal.currentAmount / goal.targetAmount) * 100)}%`, height: '100%', background: 'var(--accent-gradient)' }} />
+                      </div>
+                    </div>
+                  )) : <p>No goals set yet.</p>}
                 </div>
               </div>
 
               <div className="glass-panel">
-                <h3>Add Record</h3>
+                <h3>Quick Actions</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '16px' }}>
+                   <button className="btn" onClick={() => document.getElementById('sale-form').scrollIntoView({ behavior: 'smooth' })}>Add Sale</button>
+                   <button className="btn btn-secondary" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} onClick={() => document.getElementById('expense-form').scrollIntoView({ behavior: 'smooth' })}>Add Expense</button>
+                   <button className="btn" style={{ background: '#3b82f6' }} onClick={() => document.getElementById('goal-form').scrollIntoView({ behavior: 'smooth' })}>Set Goal</button>
+                </div>
+              </div>
+            </div>
+
+            <div className="dashboard-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+              <div className="glass-panel" id="sale-form">
+                <h3>Add Sale Record</h3>
                 <form onSubmit={handleAddSale} style={{ marginTop: '16px' }}>
                   <input type="number" placeholder="Amount ($)" value={newSale.amount} onChange={e => setNewSale({...newSale, amount: e.target.value})} required />
                   <input type="text" placeholder="Category" value={newSale.category} onChange={e => setNewSale({...newSale, category: e.target.value})} required />
@@ -199,34 +277,74 @@ const Dashboard = () => {
                   <button type="submit" className="btn" style={{ width: '100%' }}>Add Sale</button>
                 </form>
               </div>
+
+              <div className="glass-panel" id="expense-form">
+                <h3>Add Expense Record</h3>
+                <form onSubmit={handleAddExpense} style={{ marginTop: '16px' }}>
+                  <input type="number" placeholder="Amount ($)" value={newExpense.amount} onChange={e => setNewExpense({...newExpense, amount: e.target.value})} required />
+                  <input type="text" placeholder="Category" value={newExpense.category} onChange={e => setNewExpense({...newExpense, category: e.target.value})} required />
+                  <input type="text" placeholder="Description (Optional)" value={newExpense.description} onChange={e => setNewExpense({...newExpense, description: e.target.value})} />
+                  <button type="submit" className="btn btn-danger" style={{ width: '100%' }}>Add Expense</button>
+                </form>
+              </div>
+            </div>
+
+            <div className="glass-panel" id="goal-form" style={{ marginBottom: '24px' }}>
+               <h3>Set New Business Goal</h3>
+               <form onSubmit={handleAddGoal} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginTop: '16px' }}>
+                  <input type="text" placeholder="Goal Title (e.g. Monthly Revenue)" value={newGoal.title} onChange={e => setNewGoal({...newGoal, title: e.target.value})} required />
+                  <input type="number" placeholder="Target Amount ($)" value={newGoal.targetAmount} onChange={e => setNewGoal({...newGoal, targetAmount: e.target.value})} required />
+                  <input type="date" value={newGoal.deadline} onChange={e => setNewGoal({...newGoal, deadline: e.target.value})} required />
+                  <select value={newGoal.category} onChange={e => setNewGoal({...newGoal, category: e.target.value})} style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', color: '#fff', borderRadius: '8px' }}>
+                    <option value="Revenue">Revenue</option>
+                    <option value="Profit">Profit</option>
+                    <option value="Expense Reduction">Expense Reduction</option>
+                  </select>
+                  <button type="submit" className="btn" style={{ background: 'var(--success)' }}>Active Goal</button>
+               </form>
             </div>
           </>
         )}
 
         {/* ANALYTICS TAB */}
         {activeTab === 'analytics' && (
-          <div className="dashboard-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-            <div className="glass-panel">
-              <h3>Sales by Category</h3>
-              <div style={{ height: '300px', marginTop: '16px', display: 'flex', justifyContent: 'center' }}>
+          <>
+            <div className="dashboard-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+              <div className="glass-panel">
+                <h3>Sales by Category</h3>
+                <div style={{ height: '300px', marginTop: '16px', display: 'flex', justifyContent: 'center' }}>
+                  {sales.length > 0 ? (
+                    <Doughnut data={doughnutData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#f8fafc'} } } }} />
+                  ) : <p>No data to analyze yet.</p>}
+                </div>
+              </div>
+              <div className="glass-panel">
+                <h3>Insights Engine</h3>
                 {sales.length > 0 ? (
-                  <Doughnut data={doughnutData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#f8fafc'} } } }} />
+                  <div style={{ marginTop: '16px'}}>
+                    <p><strong>Top Category:</strong> {Object.keys(categoryCounts).reduce((a, b) => categoryCounts[a] > categoryCounts[b] ? a : b)}</p>
+                    <p style={{ marginTop: '12px' }}><strong>Total Transactions:</strong> {sales.length}</p>
+                    <p style={{ marginTop: '12px' }}><strong>Average Order Value:</strong> ${(totalRevenue / sales.length).toFixed(2)}</p>
+                    <hr style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '20px 0'}} />
+                    <p>AI suggests continuing promotions on your top category to maintain current {prediction?.trend?.toLowerCase() || 'momentum'}.</p>
+                  </div>
                 ) : <p>No data to analyze yet.</p>}
               </div>
             </div>
-            <div className="glass-panel">
-              <h3>Insights Engine</h3>
-              {sales.length > 0 ? (
-                <div style={{ marginTop: '16px'}}>
-                  <p><strong>Top Category:</strong> {Object.keys(categoryCounts).reduce((a, b) => categoryCounts[a] > categoryCounts[b] ? a : b)}</p>
-                  <p style={{ marginTop: '12px' }}><strong>Total Transactions:</strong> {sales.length}</p>
-                  <p style={{ marginTop: '12px' }}><strong>Average Order Value:</strong> ${(totalRevenue / sales.length).toFixed(2)}</p>
-                  <hr style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '20px 0'}} />
-                  <p>AI suggests continuing promotions on your top category to maintain current {prediction?.trend?.toLowerCase() || 'momentum'}.</p>
-                </div>
-              ) : <p>No data to analyze yet.</p>}
+
+            <div className="glass-panel" style={{ marginTop: '24px' }}>
+              <h3 style={{ marginBottom: '20px' }}>🧠 Smart Business Recommendations</h3>
+              <div className="dashboard-grid">
+                {intelligence.insights.length > 0 ? intelligence.insights.map((insight, i) => (
+                  <div key={i} className="glass-panel" style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                    <h4 style={{ color: 'var(--accent-primary)' }}>{insight.title}</h4>
+                    <p style={{ margin: '12px 0' }}>{insight.text}</p>
+                    <button className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '8px 16px' }}>{insight.action}</button>
+                  </div>
+                )) : <p>Analyzing your data to generate custom recommendations...</p>}
+              </div>
             </div>
-          </div>
+          </>
         )}
 
         {/* REPORTS TAB */}

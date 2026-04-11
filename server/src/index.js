@@ -4,6 +4,9 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import salesRoutes from './routes/sales.js';
+import expenseRoutes from './routes/expenses.js';
+import goalRoutes from './routes/goals.js';
+import intelligenceRoutes from './routes/intelligence.js';
 
 dotenv.config();
 
@@ -19,6 +22,9 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/sales', salesRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/goals', goalRoutes);
+app.use('/api/intelligence', intelligenceRoutes);
 
 // Health and Status
 app.get('/', (req, res) => {

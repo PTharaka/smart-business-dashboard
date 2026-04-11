@@ -17,11 +17,11 @@ router.post('/register', async (req, res) => {
     user = new User({ email, password: hashedPassword, name });
     await user.save();
 
-    const payload = { user: { id: user.id } };
+    const payload = { user: { id: user.id, role: user.role } };
     const defaultSecret = 'smartbusinessdashdefaultsecret123';
     jwt.sign(payload, process.env.JWT_SECRET || defaultSecret, { expiresIn: '5h' }, (err, token) => {
         if (err) throw err;
-        res.json({ token, user: { id: user.id, email, name } });
+        res.json({ token, user: { id: user.id, email, name, role: user.role } });
     });
   } catch (err) {
     console.error('Auth Error:', err);
@@ -38,11 +38,11 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid Credentials' });
 
-    const payload = { user: { id: user.id } };
+    const payload = { user: { id: user.id, role: user.role } };
     const defaultSecret = 'smartbusinessdashdefaultsecret123';
     jwt.sign(payload, process.env.JWT_SECRET || defaultSecret, { expiresIn: '5h' }, (err, token) => {
         if (err) throw err;
-        res.json({ token, user: { id: user.id, email, name: user.name } });
+        res.json({ token, user: { id: user.id, email, name: user.name, role: user.role } });
     });
   } catch (err) {
     console.error('Auth Error:', err);

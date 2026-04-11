@@ -164,3 +164,30 @@ input:focus {
 .data-table tbody tr:hover {
   background: rgba(255, 255, 255, 0.03);
 }
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto !important;
+    margin: 0 !important;
+    border-right: none;
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .main-content {
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
