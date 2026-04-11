@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import {
   Chart as ChartJS,
@@ -38,10 +38,11 @@ const Dashboard = () => {
 
   const token = localStorage.getItem('token');
   const API_URL = import.meta.env.VITE_API_URL || '';
-  const ax = axios.create({ 
+  
+  const ax = React.useMemo(() => axios.create({ 
     baseURL: API_URL,
     headers: { Authorization: `Bearer ${token}` } 
-  });
+  }), [API_URL, token]);
 
   useEffect(() => {
     fetchData();
@@ -52,7 +53,7 @@ const Dashboard = () => {
     document.body.classList.toggle('light-theme');
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [salesRes, expRes, goalRes, intelRes, predRes] = await Promise.all([
         ax.get('/api/sales'),
@@ -69,7 +70,11 @@ const Dashboard = () => {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [ax]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleAddSale = async (e) => {
     e.preventDefault();
@@ -239,6 +244,11 @@ const Dashboard = () => {
       </div>
 
       <div className="main-content">
+        <h1>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h1>
+        
+        {/* OVERVIEW TAB */}
+        {activeTab === 'overview' && (
+          <>
             <div className="dashboard-grid">
               <div className="glass-panel">
                 <p className="kpi-label">Total Revenue</p>
