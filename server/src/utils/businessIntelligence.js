@@ -75,5 +75,26 @@ export const analyzeIntelligence = (sales, expenses, goals) => {
     }
   });
 
-  return { anomalies, insights };
+  // 4. CUSTOMER SEGMENTATION
+  const customerStats = sales.reduce((acc, s) => {
+    const cust = s.customer_id || 'Unknown'; // Fallback if no specific customer ID yet
+    if (!acc[cust]) acc[cust] = { amount: 0, frequency: 0 };
+    acc[cust].amount += s.amount;
+    acc[cust].frequency += 1;
+    return acc;
+  }, {});
+
+  const segments = {
+    'High Value': 0, // > $500 total
+    'Frequent': 0,   // > 5 transactions
+    'New': 0         // 1 transaction
+  };
+
+  Object.values(customerStats).forEach(stat => {
+    if (stat.amount > 500) segments['High Value']++;
+    else if (stat.frequency > 3) segments['Frequent']++;
+    else segments['New']++;
+  });
+
+  return { anomalies, insights, segments };
 };

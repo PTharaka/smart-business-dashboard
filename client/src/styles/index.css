@@ -12,6 +12,14 @@
   --danger: #ef4444;
 }
 
+body.light-theme {
+  --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  --glass-bg: rgba(0, 0, 0, 0.05);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --text-main: #0f172a;
+  --text-muted: #475569;
+}
+
 * {
   margin: 0;
   padding: 0;

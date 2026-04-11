@@ -7,6 +7,27 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
+// Bulk creation for CSV import
+router.post('/bulk', async (req, res) => {
+  try {
+    const { salesData } = req.body;
+    if (!Array.isArray(salesData)) return res.status(400).json({ message: 'Invalid data format' });
+
+    const formattedData = salesData.map(item => ({
+      user: req.user.id,
+      amount: Number(item.amount),
+      category: item.category || 'General',
+      product: item.product || 'Unknown',
+      date: item.date ? new Date(item.date) : new Date()
+    }));
+
+    await Sale.insertMany(formattedData);
+    res.json({ message: 'Successfully imported records', count: formattedData.length });
+  } catch (err) {
+    res.status(500).json({ message: 'Server Error during import' });
+  }
+});
+
 // Get all sales for a user
 router.get('/', async (req, res) => {
   try {

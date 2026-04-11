@@ -29,8 +29,9 @@ const Dashboard = () => {
   const [sales, setSales] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [goals, setGoals] = useState([]);
-  const [intelligence, setIntelligence] = useState({ anomalies: [], insights: [] });
+  const [intelligence, setIntelligence] = useState({ anomalies: [], insights: [], segments: {} });
   const [prediction, setPrediction] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [newSale, setNewSale] = useState({ amount: '', category: '', product: '' });
   const [newExpense, setNewExpense] = useState({ amount: '', category: '', description: '' });
   const [newGoal, setNewGoal] = useState({ title: '', targetAmount: '', deadline: '', category: 'Revenue' });
@@ -45,6 +46,11 @@ const Dashboard = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+    document.body.classList.toggle('light-theme');
+  };
 
   const fetchData = async () => {
     try {
@@ -115,6 +121,35 @@ const Dashboard = () => {
     a.click();
   };
 
+  const handleCSVImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+       const text = event.target.result;
+       const lines = text.split("\n").slice(1); // skip header
+       const salesData = lines.filter(l => l.trim()).map(line => {
+         const parts = line.split(",").map(i => i.replaceAll('"', '').trim());
+         return {
+           date: parts[0],
+           category: parts[1],
+           product: parts[2],
+           amount: parts[3]
+         };
+       });
+
+       try {
+         await ax.post('/api/sales/bulk', { salesData });
+         alert(`Successfully imported ${salesData.length} records!`);
+         fetchData();
+       } catch (err) {
+         console.error(err);
+         alert("Failed to import CSV. Ensure the format matches the export.");
+       }
+    };
+    reader.readAsText(file);
+  };
+
   // Prepare overall variables
   const totalRevenue = sales.reduce((sum, s) => sum + Number(s.amount), 0);
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
@@ -146,6 +181,16 @@ const Dashboard = () => {
       data: Object.values(categoryCounts),
       backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
       hoverOffset: 4,
+      borderColor: 'rgba(255,255,255,0.1)'
+    }]
+  };
+
+  // Prepare Segmentation Chart Data
+  const segmentData = {
+    labels: Object.keys(intelligence.segments || {}),
+    datasets: [{
+      data: Object.values(intelligence.segments || {}),
+      backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6'],
       borderColor: 'rgba(255,255,255,0.1)'
     }]
   };
@@ -187,6 +232,9 @@ const Dashboard = () => {
         <nav style={{ flex: 1 }}>
           {renderNavItems()}
         </nav>
+        <button onClick={toggleTheme} className="btn" style={{ marginBottom: '12px', background: 'rgba(255,255,255,0.1)', color: 'var(--text-main)' }}>
+          {isDarkMode ? '🌞 Light Mode' : '🌙 Dark Mode'}
+        </button>
         <button onClick={handleLogout} className="btn btn-danger">Logout</button>
       </div>
 
@@ -314,21 +362,17 @@ const Dashboard = () => {
                 <h3>Sales by Category</h3>
                 <div style={{ height: '300px', marginTop: '16px', display: 'flex', justifyContent: 'center' }}>
                   {sales.length > 0 ? (
-                    <Doughnut data={doughnutData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#f8fafc'} } } }} />
+                    <Doughnut data={doughnutData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: 'var(--text-main)'} } } }} />
                   ) : <p>No data to analyze yet.</p>}
                 </div>
               </div>
               <div className="glass-panel">
-                <h3>Insights Engine</h3>
-                {sales.length > 0 ? (
-                  <div style={{ marginTop: '16px'}}>
-                    <p><strong>Top Category:</strong> {Object.keys(categoryCounts).reduce((a, b) => categoryCounts[a] > categoryCounts[b] ? a : b)}</p>
-                    <p style={{ marginTop: '12px' }}><strong>Total Transactions:</strong> {sales.length}</p>
-                    <p style={{ marginTop: '12px' }}><strong>Average Order Value:</strong> ${(totalRevenue / sales.length).toFixed(2)}</p>
-                    <hr style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '20px 0'}} />
-                    <p>AI suggests continuing promotions on your top category to maintain current {prediction?.trend?.toLowerCase() || 'momentum'}.</p>
-                  </div>
-                ) : <p>No data to analyze yet.</p>}
+                 <h3>Customer Segmentation</h3>
+                 <div style={{ height: '300px', marginTop: '16px', display: 'flex', justifyContent: 'center' }}>
+                   {Object.keys(intelligence.segments).length > 0 ? (
+                     <Doughnut data={segmentData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: 'var(--text-main)'} } } }} />
+                   ) : <p>Generating customer segments...</p>}
+                 </div>
               </div>
             </div>
 
@@ -352,9 +396,15 @@ const Dashboard = () => {
           <div className="glass-panel">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3>Historical Data Ledger</h3>
-              <button onClick={exportCSV} className="btn" style={{ background: 'var(--success)' }}>
-                Export CSV
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <label className="btn" style={{ background: '#3b82f6', cursor: 'pointer' }}>
+                  Import CSV
+                  <input type="file" accept=".csv" onChange={handleCSVImport} style={{ display: 'none' }} />
+                </label>
+                <button onClick={exportCSV} className="btn" style={{ background: 'var(--success)' }}>
+                  Export CSV
+                </button>
+              </div>
             </div>
             
             <div style={{ overflowX: 'auto' }}>
